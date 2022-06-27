@@ -137,7 +137,7 @@ def find_thetas(n, y_bar_array, h_array, E_array, I_array, mu, r_inner, Fp):
     theta_array = np.array([])
     for j in range(0, n):
        D = (((r_inner + y_bar_array[j])* h_array[j]*Fp)/(E_array[j]*I_array[j]) )* math.exp(-mu * theta_array.sum())
-       theta = sp.newton(key_function, initial_value, args=(D, mu))
+       theta = sp.newton(key_function, initial_value, fprime=key_function_prime, args=(D, mu))
        theta_array = np.append(theta_array, theta)
     return theta_array
 
