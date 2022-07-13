@@ -1,8 +1,8 @@
 import numpy as np
 import scipy.optimize as sp
 import math
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-
 
 #equation 15 in N. Pacheco 2021
 def find_kappas(n, theta_array, h_array, y_bar_array):
@@ -166,7 +166,7 @@ def solve_for_thetas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_in
 
 
 
-
+"""
 #test values for wrist A 
 n = 5 # number of notches
 mu = 0.13 # coefficient of friction
@@ -174,16 +174,11 @@ eta = 0.2 # gradient descent rate (guess)
 E_super = 3e9 # Pascals table 3 (given in giga Pascals)
 epsilon_low = 0.028 # table 3
 E_linear = 1e10  # table 3
-sigma_low = E_linear*epsilon_low 
 r_outer = 0.00081 #millimeters (table 2)
 r_inner = 0.0007 # millimeters (table 2)
 h_array = np.array([0.0008, 0.0008, 0.0008, 0.0008, 0.0008]) # table 2
 g_array = np.array([0.0014, 0.0014, 0.0014, 0.0014, 0.0014]) #table 2
-y_bar_array = find_y_bars(n, r_outer, r_inner, g_array) 
-I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
-theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
-Fp = 1.5 #Newtons (figure 9)
-
+"""
 #print('y_bar_array', y_bar_array)
 #print('final theta_array', solve_for_thetas(n, y_bar_array, h_array, I_array, mu, r_inner, r_outer, Fp, eta, E_linear, E_super, epsilon_low, sigma_low))
 
@@ -197,43 +192,38 @@ Fp = 1.5 #Newtons (figure 9)
 
 
 
+def graph_force_model(n, max_force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low):
+    y_bar_array = find_y_bars(n, r_outer, r_inner, g_array) 
+    I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
+    theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
+    sigma_low = E_linear*epsilon_low
+    eta = 0.2
+    
+    forces = np.arange(0, max_force, max_force/50.0)
+    deflections = np.ones((50, n))
+    for k in range(0, len(forces)):
+        theta_array = solve_for_thetas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, forces[k], eta, E_linear, E_super, epsilon_low, sigma_low)
+        deflections[k] = theta_array
 
+    colors = ['orange', 'green', 'blue', 'red', 'aqua', 'purple', 'yellow', 'lavender']
 
+    deflections = deflections.transpose()
 
-
-forces = np.arange(0, 2.6, 0.05)
-deflections = np.ones((52, 5))
-
-
-for k in range(0, len(forces)):
-    theta_array = solve_for_thetas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, forces[k], eta, E_linear, E_super, epsilon_low, sigma_low)
-    deflections[k] = theta_array
-        
-#print(deflections)
-
-#print(deflections.shape)
-
-figure, axis = plt.subplots(1, 3)
-axis[0].set_title('Force Model - Wrist A')
-axis[0].set_xlabel('Force')
-axis[0].set_ylabel('Deflection')
-
-
-colors = ['orange', 'green', 'blue', 'red', 'aqua']
-
-deflections = deflections.transpose()
-
-#print(deflections)
-
-
-
-for k in range(0, len(deflections)):
-    axis[0].plot(forces, deflections[k]*(180/math.pi), color=colors[k])
-
-
-
-
-
+    fig = plt.figure()
+    plt.title('Force Model')
+    plt.xlabel('Force')
+    plt.ylabel('Deflection')
+    
+    for k in range(0, len(deflections)):
+        plt.plot(forces, deflections[k]*(180/math.pi), color=colors[k])
+    
+    return fig
+    
+    
+#graph_force_model(n, 2.5, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low)
+   
+     
+"""
 #test values for wrist B 
 n = 5 # number of notches
 mu = 0.13 # coefficient of friction
@@ -250,41 +240,10 @@ y_bar_array = find_y_bars(n, r_outer, r_inner, g_array)
 I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
 theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
 Fp = 1.5 #Newtons (figure 9)
+"""
 
 
-
-forces = np.arange(0, 2.6, 0.05)
-deflections = np.ones((52, n))
-
-
-for k in range(0, len(forces)):
-    theta_array = solve_for_thetas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, forces[k], eta, E_linear, E_super, epsilon_low, sigma_low)
-    deflections[k] = theta_array
-        
-#print(deflections)
-
-#print(deflections.shape)
-
-
-
-axis[1].set_title('Force Model - Wrist B')
-axis[1].set_xlabel('Force')
-axis[1].set_ylabel('Deflection')
-
-
-colors = ['orange', 'green', 'blue', 'red', 'aqua']
-
-deflections = deflections.transpose()
-
-#print(deflections)
-
-
-
-for k in range(0, len(deflections)):
-    axis[1].plot(forces, deflections[k]*(180/math.pi), color=colors[k])
-
-
-
+"""
 #test values for wrist C
 n = 4 # number of notches
 mu = 0.13 # coefficient of friction
@@ -301,36 +260,5 @@ y_bar_array = find_y_bars(n, r_outer, r_inner, g_array)
 I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
 theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
 Fp = 1.5 #Newtons (figure 9)
-
-
-forces = np.arange(0, 2.6, 0.05)
-deflections = np.ones((52, 4))
-
-
-for k in range(0, len(forces)):
-    theta_array = solve_for_thetas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, forces[k], eta, E_linear, E_super, epsilon_low, sigma_low)
-    deflections[k] = theta_array
-        
-#print(deflections)
-
-#print(deflections.shape)
-
-axis[2].set_title('Force Model - Wrist C')
-axis[2].set_xlabel('Force')
-axis[2].set_ylabel('Deflection')
-
-
-colors = ['orange', 'green', 'blue', 'red']
-
-deflections = deflections.transpose()
-
-#print(deflections)
-
-
-
-for k in range(0, len(deflections)):
-    axis[2].plot(forces, deflections[k]*(180/math.pi), color=colors[k])
-    
-plt.show()
- 
+"""
 
