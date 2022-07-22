@@ -1,4 +1,3 @@
-
 import PySimpleGUI as sg
 import theta_solver_8 as ts
 import wrist_shape_2 as ws
