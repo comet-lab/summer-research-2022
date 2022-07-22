@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 import theta_solver as ts
+import wrist_shape as ws
 import numpy as np
 import matplotlib as mpl
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -29,6 +30,7 @@ def keys_to_check(n):
     for num in range(0, n):
         list_of_keys.append('g{}'.format(num+1))
         list_of_keys.append('h{}'.format(num+1))
+        list_of_keys.append('c{}'.format(num+1))
     return list_of_keys
 
 def is_float2(dict1, window, n):
@@ -37,14 +39,19 @@ def is_float2(dict1, window, n):
         try:
             number = float(dict1[key])
         except ValueError:
-            window['-OUTPUT2-'].update("{} is not a float".format(key), visible = True)
+            window['-OUTPUT2-'].update("{} is not a float".format(dict1[key]), visible = True)
             return False
     return True
 
 def check_parameters(dict1, window, n):
     dict2 = dict1.copy()
     list_of_keys = keys_to_check(n)
-        
+    
+    correct_gs = ['g{}'.format(i+1) for i in range(0,n)]
+    correct_hs = ['h{}'.format(i+1) for i in range(0,n)]
+    correct_cs = ['c{}'.format(i+1) for i in range(0,n)]
+
+    
     r_outer= float(dict2['r_outer'])
     r_inner = float(dict2['r_inner'])
     if r_inner <= 0:
@@ -74,16 +81,22 @@ def check_parameters(dict1, window, n):
                    window['-OUTPUT2-'].update("Linear Young's Modulus must be greater than the slope of the stress-strain curve in the superelastic region, and Linear Young's Modulus must be greater than 0.", visible = True)
                    return False
             
-            elif key.startswith('g'):
+            elif key in correct_gs:
                 dict2[key] = float(dict2[key])
                 if not valid_g(dict2[key], dict2['r_outer']) or dict2[key]<=0:
                     window['-OUTPUT2-'].update("2*outer radius must be greater than the depth of the notch. Depths of notches must be greater than zero.", visible = True)
                     return False
 
-            elif key.startswith('h'):
+            elif key in correct_hs:
                 dict2[key] = float(dict2[key])
                 if not valid_h(dict2[key]) or dict2[key]<=0:
                     window['-OUTPUT2-'].update("Heights of the notches must be greater than zero.", visible = True)
+                    return False
+
+            elif key in correct_cs:
+                dict2[key] = float(dict2[key])
+                if not valid_c(dict2[key]) or dict2[key]<0:
+                    window['-OUTPUT2-'].update("Lengths of the uncut sections must be greater than zero.", visible = True)
                     return False
             
             elif key == 'epsilon_low':
@@ -114,7 +127,14 @@ def valid_g(g, r_outer):
         return False
     return True
 
-def make_visible(n, g_list, h_list):
+def valid_c(c):
+    c = float(c)
+    if c<= 0:
+        return False
+    return True
+
+
+def make_visible(n, g_list, h_list, c_list):
     for num in range(0, n):
         g_layout = g_list[num]
         text1 = g_layout[1]
@@ -127,8 +147,15 @@ def make_visible(n, g_list, h_list):
         text2.update(visible = True)
         input2 = h_layout[2]
         input2.update(visible = True)
+
+        c_layout = c_list[num]
+        text3 = c_layout[1]
+        text3.update(visible = True)
+        input3 = c_layout[2]
+        input3.update(visible = True)
         
-def make_invisible(max_n, g_list, h_list):
+        
+def make_invisible(max_n, g_list, h_list, c_list, values):
      for num in range(0, max_n):
         g_layout = g_list[num]
         text1 = g_layout[1]
@@ -136,11 +163,20 @@ def make_invisible(max_n, g_list, h_list):
         input1 = g_layout[2]
         input1.update(visible = False)
         
+        
         h_layout = h_list[num]
         text2 = h_layout[1]
         text2.update(visible = False)
         input2 = h_layout[2]
         input2.update(visible = False)
+
+        c_layout = c_list[num]
+        text3 = c_layout[1]
+        text3.update(visible = False)
+        input3 = c_layout[2]
+        input3.update(visible = False)
+
+    
           
 def create_g_array(n, dict1):
     g_array = np.zeros(n)
@@ -148,9 +184,11 @@ def create_g_array(n, dict1):
     list_of_keys = []
     for key in dict1.keys():
         list_of_keys.append(str(key))
+
+    correct_gs = ['g{}'.format(i+1) for i in range(0,n)]
     
     for key in list_of_keys:
-        if key.startswith('g') and dict1[key] != '':
+        if key in correct_gs:
             g = dict1[key]
             index = int(key[1])-1
             g_array[index] = float(g)/1000.0
@@ -163,16 +201,35 @@ def create_h_array(n, dict1):
     list_of_keys = []
     for key in dict1.keys():
         list_of_keys.append(str(key))
+
+    correct_hs = ['h{}'.format(i+1) for i in range(0,n)]
     
     for key in list_of_keys:
-        if key.startswith('h') and dict1[key] != '':
+        if key in correct_hs:
             h = dict1[key]
             index = int(key[1])-1
             h_array[index] = float(h)/1000.0
             
     return h_array
+
+def create_c_array(n, dict1):
+    c_array = np.zeros(n)
+
+    list_of_keys = []
+    for key in dict1.keys():
+        list_of_keys.append(str(key))
+        
+    correct_cs = ['c{}'.format(i+1) for i in range(0,n)]
     
+    for key in list_of_keys:
+        if key in correct_cs:
+            c = dict1[key]
+            index = int(key[1])-1
+            c_array[index] = float(c)/1000.0
+            
+    return c_array
     
+            
 def create_final_dict(n, dict1):
     dict2 = dict1.copy()
     final_parameters = dict()
@@ -200,20 +257,6 @@ def erase_graph(canvas):
     for item in canvas.get_tk_widget().find_all():
        canvas.get_tk_widget().delete(item)
 
-#n = 4
-#g_layout_list = []
-
-#for num in range(0, n):
-#   g_layout = [sg.Push(), sg.Text("Notch {}".format(num+1)), sg.Input(key = "g{}".format(num))]
-#  g_layout_list.append(g_layout)
-
-
-#h_layout_list = []
-#for num2 in range(0, n):
-#    h_layout = [sg.Push(), sg.Text("Notch {}".format(num2+1)), sg.Input(key = "g{}".format(num2))]
-#    h_layout_list.append(h_layout)
-    
-
 
 font = (font_name, 15)
 sg.theme(theme)
@@ -222,23 +265,28 @@ sg.set_options(font=font)
 
 g_layout_list = []
 for num in range(0, max_n):
-    g_layout = [sg.Push(), sg.Text("Notch {}".format(num+1), background_color = background_clr, key='g{}_text'.format(num+1), visible=False), sg.Input(key = "g{}".format(num+1), visible=False)]
+    g_layout = [sg.Push(), sg.Text("Notch {}".format(num+1), background_color = background_clr, key='g{}_text'.format(num+1), visible=False), sg.Input(key = "g{}".format(num+1), visible=False, do_not_clear = True)]
     g_layout_list.append(g_layout)
 
 
 h_layout_list = []
 for num in range(0, max_n):
-    h_layout = [sg.Push(), sg.Text("Notch {}".format(num+1), background_color = background_clr, key='h{}_text'.format(num+1), visible=False), sg.Input(key = "h{}".format(num+1), visible=False)]
+    h_layout = [sg.Push(), sg.Text("Notch {}".format(num+1), background_color = background_clr, key='h{}_text'.format(num+1), visible=False), sg.Input(key = "h{}".format(num+1), visible=False, do_not_clear = True)]
     h_layout_list.append(h_layout)
 
-
-    
-
+c_layout_list = []
+for num in range(0, max_n):
+    c_layout = [sg.Push(), sg.Text("Uncut {}".format(num+1), background_color = background_clr, key='c{}_text'.format(num+1), visible=False), sg.Input(key = "c{}".format(num+1), visible=False, do_not_clear = True)]
+    c_layout_list.append(c_layout)
 
 
 #define layout
 
-layout1 = [[sg.Text("How many notches", background_color = background_clr)],
+
+menu_def = [['File', ['Load Values', 'Save Values', 'Exit']]]
+
+
+column1 = [[sg.Text("How many notches", background_color = background_clr)],
            [sg.Input(key='n', do_not_clear = True, enable_events=True)],
            [sg.Text(size=(100,1), background_color = background_clr, key='-OUTPUT1-', visible = False)],
            [sg.Text('Outer radius of the wrist (mm):', background_color = background_clr), sg.Input(key = 'r_outer')],
@@ -246,8 +294,12 @@ layout1 = [[sg.Text("How many notches", background_color = background_clr)],
            [sg.Text("Depth of cut for each notch (mm):", background_color = background_clr)],
            *g_layout_list,            
            [sg.Text("height of each notch(mm):", background_color = background_clr)],
-           *h_layout_list
+           *h_layout_list,
+           [sg.Text("length of each uncut section (mm):", background_color=background_clr)],
+           *c_layout_list
            ]
+
+tab1 = [[sg.Column(column1, background_color=background_clr, vertical_scroll_only = True, scrollable = True, size =(1500, 900), key='tab1_column')]]
 
 layout2 = [
     [sg.Text('Coefficient of friction (mu):', background_color = background_clr), sg.Input(key = 'mu')],
@@ -256,36 +308,44 @@ layout2 = [
     [sg.Text('Slope of the stress-strain curve in the superelastic region (GPa) :', background_color = background_clr), sg.Input(key = 'E_super')]
     ]
 
-layout3 = [[sg.Text('Maximum force (Newtons):', background_color = background_clr), sg.Input(key = 'max_force')],
-           [sg.Button("plot force model")],
-           [sg.Text(size=(100,3), key='-OUTPUT2-', visible=False)],
-           [sg.Text(size=(90,2), key='-OUTPUT3-', visible=False)],
-           [sg.Canvas(key='-CANVAS-')]]
+
+file_types=(('PNG', '.png'), ('JPG', '.jpg'), ('EPS', '.eps'), ('JPEG', '.jpeg'), ('PDF', '.pdf'), ('TIF', '.tif'), ('TIFF', '.tiff'))         
+column2 = [
+    [sg.Text('Maximum force (Newtons):', background_color = background_clr), sg.Input(key = 'max_force')],
+    [sg.Button("Plot graphs")],
+    [sg.InputText(visible=False, enable_events=True, key='fig1_path'), sg.FileSaveAs(button_text='Save Force Model', visible=False, key='fig1_save', file_types=file_types)],
+    [sg.InputText(visible=False, enable_events=True, key='fig2_path'), sg.FileSaveAs(button_text='Save Wrist Shape', visible=False, key='fig2_save', file_types=file_types)],
+    [sg.Text(size=(100,3), key='-OUTPUT2-', visible=False)],
+    [sg.Text(size=(90,2), key='-OUTPUT3-', visible=False)],
+    [sg.Canvas(key='-CANVAS1-')],
+    [sg.Canvas(key='-CANVAS2-')]
+    ]
+
+
+
+
+tab3 = [[sg.Column(column2, background_color=background_clr, vertical_scroll_only = True, scrollable = True, size =(1500, 900), key='tab3_column')]]
 
 
 #Define Layout with Tabs         
 
 
-tabgrp = [[sg.TabGroup([[sg.Tab('Wrist Dimensions', layout1, title_color='White',border_width =10, background_color = background_clr, element_justification= 'center'),
-                         
-                    sg.Tab('Material Properties', layout2,title_color='White',background_color=background_clr, element_justification= 'right'),
-                         
-                    sg.Tab('Graphs', layout3,title_color='White',background_color= background_clr, element_justification= 'center')]],
 
-                       tab_location='centertop',
-                       title_color='Yellow', tab_background_color='Purple',selected_title_color='White', selected_background_color=background_clr ,
-                       border_width=5), sg.Button('Close')]]  
-        
+final_layout = [ [sg.Menu(menu_def, tearoff=True)],
+    [sg.TabGroup([[sg.Tab('Wrist Dimensions', tab1, title_color='White',border_width =10, background_color = background_clr, element_justification= 'center'),
+                   sg.Tab('Material Properties', layout2, title_color='White',background_color=background_clr, element_justification= 'right'),
+                   sg.Tab('Graphs', tab3, title_color='White',background_color= background_clr, element_justification= 'center')]],
+                  tab_location='centertop',
+                    title_color='Yellow', tab_background_color='Purple',selected_title_color='White', selected_background_color=background_clr ,
+                       border_width=5),sg.Button('Close')]]
 
 
+window = sg.Window("Force Model", layout = final_layout, finalize = True)
 
 
-
-
-
-window = sg.Window("Force Model",tabgrp)
 n = 0
-fig_canvas_agg = None
+fig_canvas_agg1 = None
+fig_canvas_agg2 = None
 
 while True:
     event, values = window.read()
@@ -293,20 +353,28 @@ while True:
         break
     if event == 'Close':
         break
+    if event == 'Exit':
+        break
     
     if values['n']:
         window['-OUTPUT1-'].update(visible = False)
         if not is_int(values['n']):
             window['-OUTPUT1-'].update("please make sure the number of notches is an integer", visible = True)
+            window['tab1_column'].contents_changed()
         elif not valid_n(values['n'], max_n):
             window['-OUTPUT1-'].update("please make sure the number of notches is greater than 0 and smaller than {}".format(max_n+1), visible = True)
-                    
+            window['tab1_column'].contents_changed()
+            
         else:
             n = int(values['n'])
-            make_invisible(max_n, g_layout_list, h_layout_list)
-            make_visible(n, g_layout_list, h_layout_list)
+            make_invisible(max_n, g_layout_list, h_layout_list, c_layout_list, values)
+            window.refresh()
+            window['tab1_column'].contents_changed()
+            make_visible(n, g_layout_list, h_layout_list, c_layout_list)
+            window.refresh()
+            window['tab1_column'].contents_changed()
 
-    if event == "plot force model":
+    if event == "Plot graphs":
         window['-OUTPUT2-'].update(visible = False)
         dict_of_parameters = values.copy()
         if not is_float2(dict_of_parameters, window, n):
@@ -315,23 +383,54 @@ while True:
             window['-OUTPUT3-'].update("Please find and correct the values.", visible=True)
         else:
             window['-OUTPUT2-'].update(visible = False)
-            window['-OUTPUT3-'].update("All values you entered are acceptable. Please wait a moment for the graph to load.", visible=True)
+            window['-OUTPUT3-'].update("All values you entered are acceptable. Please wait a moment for the graphs to load.", visible=True)
             window.refresh()
             g_array = create_g_array(n, dict_of_parameters)
             h_array = create_h_array(n, dict_of_parameters)
+            c_array = create_c_array(n, dict_of_parameters)
             final_dict = create_final_dict(n, dict_of_parameters)
+        
+            
+            if fig_canvas_agg1 is not None:
+                unpack_canvas(fig_canvas_agg1)
 
-            if fig_canvas_agg is not None:
-                unpack_canvas(fig_canvas_agg)
+            if fig_canvas_agg2 is not None:
+                unpack_canvas(fig_canvas_agg2)
+            
+
                 
-            fig = ts.graph_force_model(final_dict['n'], final_dict['max_force'], final_dict['r_outer'], final_dict['r_inner'], g_array, h_array, final_dict['mu'], final_dict['E_linear'], final_dict['E_super'], final_dict['epsilon_low'])
-            fig_canvas_agg = draw_figure(window['-CANVAS-'].TKCanvas, fig)
+            (forces, deflections, kappas) = ts.find_forces_thetas_kappas(final_dict['n'], final_dict['max_force'], final_dict['r_outer'], final_dict['r_inner'], g_array, h_array, final_dict['mu'], final_dict['E_linear'], final_dict['E_super'], final_dict['epsilon_low'])
+            fig1 = ts.graph_force_model(forces, deflections, final_dict['n'])
+            fig_canvas_agg1 = draw_figure(window['-CANVAS1-'].TKCanvas, fig1)
             window.refresh()
-            
-            
+            window['tab3_column'].contents_changed()
+
+            new_forces, x_array, z_array = ws.find_x_and_z_coordinates(forces, c_array, n, kappas, deflections)
+            fig2 = ws.graph_wrist_shape(new_forces, x_array, z_array)
+            fig_canvas_agg2 = draw_figure(window['-CANVAS2-'].TKCanvas, fig2)
+            window.refresh()
+
+            window['fig1_save'].update(visible = True)
+            window['fig2_save'].update(visible = True)
+            window['tab3_column'].contents_changed()
+
+    if (event == 'fig1_path') and (values['fig1_path'] != ''):
+        try:
+            fig1.savefig(values['fig1_path'])
+        except (IOError, OSError) as error:
+            sg.popup("Problem saving file. Error is {}".format(error))
+        else:
+            sg.popup("force model saved as {}".format(values['fig1_path']))
         
-        
-        
+    if (event == 'fig2_path') and (values['fig2_path'] != ''):
+        try:
+            fig2.savefig(values['fig2_path'])
+        except (IOError, OSError) as error:
+            sg.popup("Problem saving file. Error is {}".format(error))
+        else:
+            sg.popup("wrist shape saved as {}".format(values['fig2_path']))
+
+    
+
         
 window.close() 
-
