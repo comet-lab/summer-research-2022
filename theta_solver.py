@@ -149,7 +149,7 @@ def find_thetas(n, y_bar_array, h_array, E_array, I_array, mu, r_inner, Fp, thet
     return theta_array
 
 #iterative process from section 3.3 in N. Pacheco 2021
-def solve_for_thetas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, Fp, eta, E_linear, E_super, epsilon_low, sigma_low):
+def solve_for_thetas_and_kappas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, Fp, eta, E_linear, E_super, epsilon_low, sigma_low):
     E_array = E_linear * np.ones(n)
     #print('initial E_array', E_array)
     theta_array = find_thetas(n, y_bar_array, h_array, E_array, I_array, mu, r_inner, Fp, theta_max_array)
@@ -162,7 +162,10 @@ def solve_for_thetas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_in
         previous_E_array = E_array
         E_array = update_Es(n, eta, previous_E_array, theta_array, h_array, y_bar_array, r_outer, E_linear, E_super, epsilon_low, sigma_low)
     #print('final E_array', E_array)
-    return theta_array
+    kappa_array = find_kappas(n, theta_array, h_array, y_bar_array)
+    return (theta_array, kappa_array) 
+
+
 
 
 
@@ -179,6 +182,7 @@ r_inner = 0.0007 # millimeters (table 2)
 h_array = np.array([0.0008, 0.0008, 0.0008, 0.0008, 0.0008]) # table 2
 g_array = np.array([0.0014, 0.0014, 0.0014, 0.0014, 0.0014]) #table 2
 """
+
 #print('y_bar_array', y_bar_array)
 #print('final theta_array', solve_for_thetas(n, y_bar_array, h_array, I_array, mu, r_inner, r_outer, Fp, eta, E_linear, E_super, epsilon_low, sigma_low))
 
@@ -190,9 +194,7 @@ g_array = np.array([0.0014, 0.0014, 0.0014, 0.0014, 0.0014]) #table 2
 #final theta_array [0.34665659 0.31569582 0.2884928  0.26443844 0.24304743]
 
 
-
-
-def graph_force_model(n, max_force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low):
+def find_forces_thetas_kappas(n, max_force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low):
     y_bar_array = find_y_bars(n, r_outer, r_inner, g_array) 
     I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
     theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
@@ -201,26 +203,42 @@ def graph_force_model(n, max_force, r_outer, r_inner, g_array, h_array, mu, E_li
     
     forces = np.arange(0, max_force, max_force/50.0)
     deflections = np.ones((50, n))
-    for k in range(0, len(forces)):
-        theta_array = solve_for_thetas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, forces[k], eta, E_linear, E_super, epsilon_low, sigma_low)
-        deflections[k] = theta_array
+    final_kappas = np.ones((50, n))
 
+    for k in range(0, len(forces)):
+        theta_and_kappa_arrays = solve_for_thetas_and_kappas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, forces[k], eta, E_linear, E_super, epsilon_low, sigma_low)
+        deflections[k] = theta_and_kappa_arrays[0]
+        final_kappas[k] = theta_and_kappa_arrays[1]
+
+    return (forces, deflections, final_kappas)
+
+
+def graph_force_model(forces, deflections, n):
+    deflections2 = deflections.copy()
+
+    n_list = list(range(1, n+1))
     colors = ['orange', 'green', 'blue', 'red', 'aqua', 'purple', 'yellow', 'lavender']
 
-    deflections = deflections.transpose()
+    deflections2 = deflections2.transpose()
 
     fig = plt.figure()
+    fig.set_figheight(10)
+    fig.set_figwidth(12)
     plt.title('Force Model')
-    plt.xlabel('Force')
-    plt.ylabel('Deflection')
+    plt.xlabel('Force (Newtons)')
+    plt.ylabel('Deflection (Degrees)')
     
-    for k in range(0, len(deflections)):
-        plt.plot(forces, deflections[k]*(180/math.pi), color=colors[k])
     
+    for k in range(0, len(deflections2)):
+        plt.plot(forces, deflections2[k]*(180/math.pi), color=colors[k], label='notch{}'.format(n_list[k]))
+        plt.legend(loc ="lower right")
     return fig
     
     
 #graph_force_model(n, 2.5, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low)
+
+
+
    
      
 """
@@ -261,4 +279,3 @@ I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
 theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
 Fp = 1.5 #Newtons (figure 9)
 """
-
