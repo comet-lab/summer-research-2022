@@ -6,7 +6,6 @@ import matplotlib as mpl
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 mpl.use('TkAgg')
 
-#c_array = np.array([0.0012, 0.0012, 0.0012, 0.0012, 0.0012])
 
 max_n = 8
 background_clr = '#4a4ca3'
