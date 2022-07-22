@@ -1,10 +1,13 @@
+
 import PySimpleGUI as sg
-import theta_solver as ts
-import wrist_shape as ws
+import theta_solver_8 as ts
+import wrist_shape_2 as ws
 import numpy as np
 import matplotlib as mpl
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 mpl.use('TkAgg')
+
+#c_array = np.array([0.0012, 0.0012, 0.0012, 0.0012, 0.0012])
 
 max_n = 8
 background_clr = '#4a4ca3'
@@ -52,7 +55,7 @@ def check_parameters(dict1, window, n):
     correct_cs = ['c{}'.format(i+1) for i in range(0,n)]
 
     
-    r_outer= float(dict2['r_outer'])
+    r_outer = float(dict2['r_outer'])
     r_inner = float(dict2['r_inner'])
     if r_inner <= 0:
         window['-OUTPUT2-'].update("Inner radius must be greater than 0.", visible = True)
@@ -257,6 +260,49 @@ def erase_graph(canvas):
     for item in canvas.get_tk_widget().find_all():
        canvas.get_tk_widget().delete(item)
 
+def create_list_of_strings(dict1):
+    value_list = []
+    dict1 = dict1.copy()
+    n = dict1['n']
+    correct_gs = ['g{}'.format(i+1) for i in range(0,int(n))]
+    correct_hs = ['h{}'.format(i+1) for i in range(0,int(n))]
+    correct_cs = ['c{}'.format(i+1) for i in range(0,int(n))]
+
+    n_entry = "Notches\t{}\n".format(dict1['n'])
+    value_list.append(n_entry)
+    
+    depths = "Depths\t" + "[" + ", ".join(["{}".format(dict1[g_key]) for g_key in correct_gs]) + "]" + "\n"
+    value_list.append(depths)
+    heights = "Heights\t" + "[" + ", ".join(["{}".format(dict1[h_key]) for h_key in correct_hs]) + "]" + "\n"
+    value_list.append(heights)
+    uncut = "Depths\t" + "[" + ", ".join(["{}".format(dict1[c_key]) for c_key in correct_cs]) + "]" + "\n"
+    value_list.append(uncut)
+    
+    
+    key_names = ['Outer_Radius', 'Inner_Radius', 'Coefficient_Friction', "Linear_Young's_Modulus", 'Superelastic_Modulus', 'Strain_Lower']
+    list_of_keys = ['r_outer','r_inner', 'mu', 'E_linear', 'E_super', 'epsilon_low']
+                                         
+    for index in range(0, len(key_names)):
+        entry = "{}\t{}\n".format(key_names[index], dict1[list_of_keys[index]])
+        value_list.append(entry)
+    
+    return value_list 
+    
+    
+    
+    
+
+def export_values(dict1, file_path):
+    value_list = create_list_of_strings(dict1)
+    try:
+        with open(file_path, "w") as file1:
+            file1.writelines(["# lengths are in units of mm \n", "# Young's modulus is in units of GPa \n"])
+            file1.writelines(value_list)
+            
+    except (IOError, OSError) as error:
+        sg.popup("Problem saving file. Error is {}".format(error))
+    
+
 
 font = (font_name, 15)
 sg.theme(theme)
@@ -429,8 +475,15 @@ while True:
             sg.popup("Problem saving file. Error is {}".format(error))
         else:
             sg.popup("wrist shape saved as {}".format(values['fig2_path']))
-
+            
+    if event == "Save Values":
+        if values['n'] == '':
+            sg.popup('Please fill in all the fields (except maximum force) before attempting to save.')
+        else:
+            filename = sg.popup_get_file('Save the values in a text file', save_as = True, no_window=True, file_types=(('TXT', '.txt'),))
+            export_values(values, filename)
+            sg.popup("values were saved as {}".format(filename))
+        
     
 
-        
 window.close() 
