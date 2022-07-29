@@ -1,3 +1,4 @@
+
 import numpy as np
 import math
 import theta_solver_8 as ts
@@ -51,6 +52,7 @@ max_force = 2.5 #Newtons (figure 9)
 """
 
 # equation 1 in N. Pacheco 2021
+
 def T_uncut(c):
     identity_matrix = np.identity(3)
     bottom_row = np.zeros(3)
@@ -116,7 +118,10 @@ def modify_arrays(forces, deflections, kappas):
 
     return (new_forces, new_deflections, new_kappas)
 
+
+
 # equation 1 in N. Pacheco 2021
+
 def find_positions(c_array, n, kappas, deflections):
     zeros = np.array([0, 0, 0, 1])
     position_array = np.zeros((2*n+1, 4))
@@ -159,8 +164,8 @@ def find_x_and_z_coordinates(forces, c_array, n, kappas, deflections):
 
 def graph_wrist_shape(new_forces, x_array, z_array):
     fig = plt.figure()
-    fig.set_figheight(10)
-    fig.set_figwidth(12)
+    fig.set_figheight(8.5)
+    fig.set_figwidth(10.5)
     colors = ['#0000FF', '#6082B6', '#5D3FD3', '#1F51FF', '#CCCCFF', '#4169E1', '#87CEEB', '#4682B4', '#A7C7E7', '#89CFF0', '#0096FF', '#0047AB', '#6495ED', '#1434A4', '#7DF9FF']
     
     plt.title('Wrist Shape')
@@ -171,5 +176,3 @@ def graph_wrist_shape(new_forces, x_array, z_array):
         plt.legend(title="Forces", loc='upper right')
     return fig
 
-
-    
