@@ -4,6 +4,7 @@ import math
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+
 #equation 15 in N. Pacheco 2021
 def find_kappas(n, theta_array, h_array, y_bar_array):
     kappa_array = np.array([])
@@ -194,13 +195,15 @@ g_array = np.array([0.0014, 0.0014, 0.0014, 0.0014, 0.0014]) #table 2
 #final theta_array [0.34665659 0.31569582 0.2884928  0.26443844 0.24304743]
 
 
+
 def find_forces_thetas_kappas(n, max_force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low):
+    eta = 0.35
+    
     y_bar_array = find_y_bars(n, r_outer, r_inner, g_array) 
     I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
     theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
     sigma_low = E_linear*epsilon_low
-    eta = 0.2
-    
+        
     forces = np.arange(0, max_force, max_force/50.0)
     deflections = np.ones((50, n))
     final_kappas = np.ones((50, n))
@@ -222,8 +225,9 @@ def graph_force_model(forces, deflections, n):
     deflections2 = deflections2.transpose()
 
     fig = plt.figure()
-    fig.set_figheight(10)
-    fig.set_figwidth(12)
+    
+    fig.set_figheight(8.5)
+    fig.set_figwidth(10.5)
     plt.title('Force Model')
     plt.xlabel('Force (Newtons)')
     plt.ylabel('Deflection (Degrees)')
