@@ -1,9 +1,7 @@
-#July 28, 2022
-
 import PySimpleGUI as sg
-import theta_solver_9 as ts
-import wrist_shape_3 as ws
-import Three_D_Wrist_2 as td
+import theta_solver as ts
+import wrist_shape as ws
+import Three_D_Wrist as td
 import numpy as np
 import matplotlib as mpl
 
