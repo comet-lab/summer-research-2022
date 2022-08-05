@@ -212,11 +212,27 @@ def find_forces_thetas_kappas(n, max_force, r_outer, r_inner, g_array, h_array, 
         theta_and_kappa_arrays = solve_for_thetas_and_kappas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, forces[k], eta, E_linear, E_super, epsilon_low, sigma_low)
         deflections[k] = theta_and_kappa_arrays[0]
         final_kappas[k] = theta_and_kappa_arrays[1]
-
+        
     return (forces, deflections, final_kappas)
 
+def find_thetas_kappas_for_one_force(n, force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low):
+    eta = 0.35
+    y_bar_array = find_y_bars(n, r_outer, r_inner, g_array) 
+    I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
+    theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
+    sigma_low = E_linear*epsilon_low
 
-def graph_force_model(forces, deflections, n):
+    deflections = np.ones((n))
+    final_kappas = np.ones((n))
+
+    theta_and_kappa_arrays = solve_for_thetas_and_kappas(n, y_bar_array, h_array, I_array, theta_max_array, mu, r_inner, r_outer, force, eta, E_linear, E_super, epsilon_low, sigma_low)
+    deflections = theta_and_kappa_arrays[0]
+    final_kappas = theta_and_kappa_arrays[1]
+
+    return force, deflections, final_kappas
+
+
+def graph_force_model(forces, deflections, n, fignum):
     deflections2 = deflections.copy()
 
     n_list = list(range(1, n+1))
@@ -224,7 +240,7 @@ def graph_force_model(forces, deflections, n):
 
     deflections2 = deflections2.transpose()
 
-    fig = plt.figure()
+    fig = plt.figure(num=fignum)
     
     fig.set_figheight(8.5)
     fig.set_figwidth(10.5)
@@ -283,3 +299,4 @@ I_array = find_Is(n, r_outer, r_inner, g_array, y_bar_array)
 theta_max_array = find_theta_max(n, h_array, r_outer, y_bar_array)
 Fp = 1.5 #Newtons (figure 9)
 """
+
