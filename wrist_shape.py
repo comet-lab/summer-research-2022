@@ -1,7 +1,8 @@
+#July 28, 2022
 
 import numpy as np
 import math
-import theta_solver_8 as ts
+import theta_solver as ts
 import matplotlib.pyplot as plt
 
 
@@ -159,11 +160,20 @@ def find_x_and_z_coordinates(forces, c_array, n, kappas, deflections):
 
     return (new_forces, x_array, z_array)
 
-
-
-
-def graph_wrist_shape(new_forces, x_array, z_array):
-    fig = plt.figure()
+def find_x_and_z_coordinates_for_one_force(force, c_array, n, kappas, deflections):
+    x_array = np.zeros((2*n +1))
+    z_array = np.zeros((2*n +1))
+    position_array = find_positions(c_array, n, kappas, deflections)
+    transposed = position_array.transpose()
+    xs = 1000*transposed[0]
+    zs = 1000*transposed[2]
+    x_array = xs
+    z_array = zs
+    return (force, x_array, z_array)
+    
+    
+def graph_wrist_shape(new_forces, x_array, z_array, fignum):
+    fig = plt.figure(num=fignum)
     fig.set_figheight(8.5)
     fig.set_figwidth(10.5)
     colors = ['#0000FF', '#6082B6', '#5D3FD3', '#1F51FF', '#CCCCFF', '#4169E1', '#87CEEB', '#4682B4', '#A7C7E7', '#89CFF0', '#0096FF', '#0047AB', '#6495ED', '#1434A4', '#7DF9FF']
@@ -176,3 +186,7 @@ def graph_wrist_shape(new_forces, x_array, z_array):
         plt.legend(title="Forces", loc='upper right')
     return fig
 
+
+#force, deflections, final_kappas = find_thetas_kappas_for_one_force(n, force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low)
+
+#force, x_array, z_array = find_x_and_z_coordinates_for_one_force(force, c_array, n)    
