@@ -1,0 +1,13 @@
+# Wrist C from N. Pacheco 2021
+# lengths are in units of mm 
+# Young's modulus is in units of GPa 
+Notches:4
+Depths: [1.36, 1.39, 1.42, 1.45]
+Heights: [1.0, 1.0, 1.0, 1.0]
+Uncut: [1.0, 1.0, 1.0, 1.0]
+Outer_Radius: 0.81
+Inner_Radius: 0.7
+Coefficient_Friction: 0.13
+Linear_Young's_Modulus: 10
+Superelastic_Modulus: 3
+Strain_Lower: 0.028

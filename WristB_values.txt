@@ -1,0 +1,15 @@
+# Wrist B from N. Pacheco 2021
+# lengths are in units of mm 
+# Young's modulus is in units of GPa 
+Notches:5
+Depths: [1.4, 1.4, 1.4, 1.4, 1.4]
+Heights: [0.5, 0.5, 0.5, 0.5, 0.5]
+Uncut: [1.5, 1.5, 1.5, 1.5, 1.5]
+Outer_Radius: 0.81
+Inner_Radius: 0.7
+Coefficient_Friction: 0.13
+Linear_Young's_Modulus: 10
+Superelastic_Modulus: 3
+Strain_Lower: 0.028
+
+
