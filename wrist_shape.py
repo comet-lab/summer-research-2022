@@ -1,56 +1,8 @@
-#July 28, 2022
-
 import numpy as np
 import math
 import theta_solver as ts
 import matplotlib.pyplot as plt
 
-
-"""
-n = 5 # number of notches
-mu = 0.13 # coefficient of friction
-eta = 0.2 # gradient descent rate (guess)
-E_super = 3e9 # Pascals table 3 (given in giga Pascals)
-epsilon_low = 0.028 # table 3
-E_linear = 1e10  # table 3
-r_outer = 0.00081 #millimeters (table 2)
-r_inner = 0.0007 # millimeters (table 2)
-h_array = np.array([0.0008, 0.0008, 0.0008, 0.0008, 0.0008]) # table 2
-g_array = np.array([0.0014, 0.0014, 0.0014, 0.0014, 0.0014]) #table 2
-c_array = np.array([0.0012, 0.0012, 0.0012, 0.0012, 0.0012])
-max_force = 2.5
-"""
-
-"""
-#test values for wrist B 
-n = 5 # number of notches
-mu = 0.13 # coefficient of friction
-eta = 0.2 # gradient descent rate (guess)
-E_super = 3e9 # Pascals table 3 (given in giga Pascals)
-epsilon_low = 0.028 # table 3
-E_linear = 1e10  # table 3
-r_outer = 0.00081 #millimeters (table 2)
-r_inner = 0.0007 # millimeters (table 2)
-h_array = np.array([0.0005, 0.0005, 0.0005, 0.0005, 0.0005]) # table 2
-g_array = np.array([0.0014, 0.0014, 0.0014, 0.0014, 0.0014]) #table 2
-c_array = np.array([0.0015, 0.0015, 0.0015, 0.0015, 0.0015])
-max_force = 1.8 #Newtons (figure 9)
-"""
-"""
-#test values for wrist C
-n = 4 # number of notches
-mu = 0.13 # coefficient of friction
-eta = 0.2 # gradient descent rate (guess)
-E_super = 3e9 # Pascals table 3 (given in giga Pascals)
-epsilon_low = 0.028 # table 3
-E_linear = 1e10  # table 3
-r_outer = 0.00081 #millimeters (table 2)
-r_inner = 0.0007 # millimeters (table 2)
-h_array = np.array([0.001, 0.001, 0.001, 0.001]) # table 2
-g_array = np.array([0.00136, 0.00139, 0.00142, 0.00145]) #table 2
-c_array = np.array([0.001, 0.001, 0.001, 0.001])
-max_force = 2.5 #Newtons (figure 9)
-"""
 
 # equation 1 in N. Pacheco 2021
 
@@ -87,6 +39,7 @@ def T_notch(theta, kappa):
 
 #(forces, deflections, kappas) = ts.find_forces_thetas_kappas(n, max_force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low)
 
+# takes the forces and deflections for ts.find_forces_thetas_kappas and finds the force where the wrist won't bend anymore
 
 def force_at_max_theta(forces, deflections):
     previous_theta = 1
@@ -97,14 +50,14 @@ def force_at_max_theta(forces, deflections):
     return forces[-1]
 
 
-
+# takes the forces and deflections from ts.find_forces_thetas_kappas and picks out several forces for the wrist shape graph. 
 def modify_arrays(forces, deflections, kappas):
     new_forces = np.array([])
     
     force_at_max = force_at_max_theta(forces, deflections)
     last_index = forces.tolist().index(force_at_max)
-    skip = last_index//8
-
+    skip = max(1, last_index//8)
+    
     for num in range(last_index, 0, -skip):
         new_forces = np.append(new_forces, forces[num]) 
 
@@ -142,6 +95,7 @@ def find_positions(c_array, n, kappas, deflections):
     return position_array
 
 
+# calls find_positions for multiple forces and deflections. 
 def find_x_and_z_coordinates(forces, c_array, n, kappas, deflections):
     new_forces, new_deflections, new_kappas = modify_arrays(forces, deflections, kappas)
     x_array = np.zeros((len(new_forces), 2*n +1))
@@ -160,6 +114,7 @@ def find_x_and_z_coordinates(forces, c_array, n, kappas, deflections):
 
     return (new_forces, x_array, z_array)
 
+# calls find_positions for one force for 3d wrist graph.
 def find_x_and_z_coordinates_for_one_force(force, c_array, n, kappas, deflections):
     x_array = np.zeros((2*n +1))
     z_array = np.zeros((2*n +1))
@@ -171,7 +126,8 @@ def find_x_and_z_coordinates_for_one_force(force, c_array, n, kappas, deflection
     z_array = zs
     return (force, x_array, z_array)
     
-    
+
+#returns matplotlib figure of the wrist shapes.     
 def graph_wrist_shape(new_forces, x_array, z_array, fignum):
     fig = plt.figure(num=fignum)
     fig.set_figheight(8.5)
