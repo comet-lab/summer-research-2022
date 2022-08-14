@@ -11,17 +11,23 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import math
 
-
+# maximum number of notches the GUI will accept
 max_n = 8
-background_clr = '#4a4ca3'
+ 
 theme = 'DarkBlue4'
+
+# color code for DarkBlue4
+background_clr = '#4a4ca3'
+
 font_name = 'Courier New'
 
 
 #####################################################################
 
 #functions used multiple times:
-       
+
+
+# makes invisible the text and input boxes on Dimensions tab for depths, heights, and uncut sections. 
 def make_invisible(max_n, g_list, h_list, c_list, values):
      for num in range(0, max_n):
         g_layout = g_list[num]
@@ -42,6 +48,8 @@ def make_invisible(max_n, g_list, h_list, c_list, values):
         input3 = c_layout[2]
         input3.update(visible = False)
 
+
+# makes visible the text and input boxes on Dimensions tab for depths, heights, and uncut sections. 
 def make_visible(n, g_list, h_list, c_list):
     for num in range(0, n):
         g_layout = g_list[num]
@@ -62,6 +70,7 @@ def make_visible(n, g_list, h_list, c_list):
         input3 = c_layout[2]
         input3.update(visible = True)
 
+# tests if an input string is an integer. 
 def is_int(string):
     try:
         number = int(string)
@@ -69,6 +78,7 @@ def is_int(string):
         return False
     return True
 
+# tests if the number of notches is a valid number
 def valid_n(n, max_n):
     n = int(n)
     if n <=0 or n>max_n:
@@ -76,6 +86,7 @@ def valid_n(n, max_n):
     else:
         return True
 
+# create a list of pysimplgui element keys that need to be checked before calculations. 
 def keys_to_check(n):
     list_of_keys = ['r_inner','r_outer', 'epsilon_low', 'E_super', 'E_linear', 'mu']
     for num in range(0, n):
@@ -85,6 +96,7 @@ def keys_to_check(n):
     return list_of_keys
 
 
+# tests if the dimensions and material properties entered by the user are floats.
 def is_float(dict1, window, n, output):
     list_of_keys = keys_to_check(n)
     for key in list_of_keys:
@@ -95,9 +107,23 @@ def is_float(dict1, window, n, output):
             return False
     return True
 
+# deletes the canvas figure aggregate.
+def delete_figure_agg(figure_agg):
+    figure_agg.get_tk_widget().forget()
+    plt.close('all')
+
+# removes canvas and toolbar
+def remove_figure_with_toolbar(canvas, canvas_toolbar):
+    if canvas.children:
+        for child in canvas.winfo_children():
+            child.destroy()
+    if canvas_toolbar.children:
+        for child in canvas_toolbar.winfo_children():
+            child.destroy()
 #####################################################################        
 # code for if values['n']
 
+# change the number of displayed inputs boxes for depths, heights, and uncut sections when the number of notches changes. 
 def process_n(window, values, max_n, g_layout_list, h_layout_list, c_layout_list):
     n = int(values['n'])
     make_invisible(max_n, g_layout_list, h_layout_list, c_layout_list, values)
@@ -109,8 +135,9 @@ def process_n(window, values, max_n, g_layout_list, h_layout_list, c_layout_list
 
 #####################################################################
     
-# code for event == "-INg-", "-INh-", OR "-INc-"
+# code for event in( "-INg-", "-INh-", "-INc-")
 
+# copies the first input value into the rest for depths, heights, or uncut sections.
 def populate_same_values(x, values, window):
     if values['{}1'.format(x)]:
         value_to_copy = values['{}1'.format(x)]
@@ -123,26 +150,28 @@ def populate_same_values(x, values, window):
 
 # code 1 for event == "Plot graphs"
 
-
+# test for valid notch height 
 def valid_h(h):
     h = float(h)
     if h <= 0:
         return False
     return True
 
+# test for valid notch depth
 def valid_g(g, r_outer):
     g = float(g)
     if g <= 0 or 2*float(r_outer) < g:
         return False
     return True
 
+# test for valid uncut section length
 def valid_c(c):
     c = float(c)
     if c<= 0:
         return False
     return True
 
-
+#tests all the wrist dimensions and material properties for valid values.
 def check_parameters(dict1, window, n, output):
     dict2 = dict1.copy()
     list_of_keys = keys_to_check(n)
@@ -202,7 +231,7 @@ def check_parameters(dict1, window, n, output):
                     return False
     return True
 
-
+# tests for valid force for 2d and 3d graphs
 def valid_force(force):
     try:
         force = float(force)
@@ -217,6 +246,7 @@ def valid_force(force):
 
 # code 2 for event == "Plot graphs"
 
+# creates g_array of depths and changes units to meters.
 def create_g_array(n, dict1):
     g_array = np.zeros(n)
 
@@ -233,7 +263,8 @@ def create_g_array(n, dict1):
             g_array[index] = float(g)/1000.0
             
     return g_array
-            
+
+# creates h_array of heights and changes units to meters.            
 def create_h_array(n, dict1):
     h_array = np.zeros(n)
 
@@ -251,6 +282,7 @@ def create_h_array(n, dict1):
             
     return h_array
 
+# creates c_array of uncut sections and changes units to meters.
 def create_c_array(n, dict1):
     c_array = np.zeros(n)
 
@@ -267,7 +299,8 @@ def create_c_array(n, dict1):
             c_array[index] = float(c)/1000.0
             
     return c_array
-    
+
+# creates dictionary of wrist dimensions and material properties with the units needed for calculations    
 def create_final_dict(n, dict1, plot_type):
     dict2 = dict1.copy()
     final_parameters = dict()
@@ -285,25 +318,24 @@ def create_final_dict(n, dict1, plot_type):
     return final_parameters
 
 
+# takes pysimplegui canvas, matplotlib figure, and toolbar canvas and embeds the fig and toolbar in the canvas. 
 def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
-    if canvas.children:
-        for child in canvas.winfo_children():
-            child.destroy()
-    if canvas_toolbar.children:
-        for child in canvas_toolbar.winfo_children():
-            child.destroy()
+   
     figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
     figure_canvas_agg.draw()
-    toolbar = Toolbar(figure_canvas_agg, canvas_toolbar)
+    toolbar = NavigationToolbar2Tk(figure_canvas_agg, canvas_toolbar)
     toolbar.update()
     figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
+    return figure_canvas_agg
 
 
-class Toolbar(NavigationToolbar2Tk):
-    def __init__(self, *args, **kwargs):
-        super(Toolbar, self).__init__(*args, **kwargs)
-
+# calculates forces and deflections; creates a graph; calculates coordinates of the wrist shape; creates another graph. 
 def plot_graphs(window, n, dict_of_parameters):
+
+    remove_figure_with_toolbar(window['-CANVAS1-'].TKCanvas, window['toolbar_canvas_1'].TKCanvas)
+    remove_figure_with_toolbar(window['-CANVAS2-'].TKCanvas, window['toolbar_canvas_2'].TKCanvas)
+    
+    
     window['-OUTPUT2-'].update(visible = False)
     window['-OUTPUT3-'].update("All values you entered are acceptable. Please wait a moment for the graphs to load.", visible=True)
     window.refresh()
@@ -316,7 +348,7 @@ def plot_graphs(window, n, dict_of_parameters):
                                                                  final_dict['mu'], final_dict['E_linear'], final_dict['E_super'], final_dict['epsilon_low'])
     fig1 = ts.graph_force_model(forces, deflections, final_dict['n'], 1)
         
-    draw_figure_w_toolbar(window['-CANVAS1-'].TKCanvas, fig1, window['toolbar_canvas_1'].TKCanvas)
+    fig_agg2d1 = draw_figure_w_toolbar(window['-CANVAS1-'].TKCanvas, fig1, window['toolbar_canvas_1'].TKCanvas)
     
     window.refresh()
     window['tab3_column'].contents_changed()
@@ -324,32 +356,30 @@ def plot_graphs(window, n, dict_of_parameters):
     new_forces, x_array, z_array = ws.find_x_and_z_coordinates(forces, c_array, n, kappas, deflections)
     fig2 = ws.graph_wrist_shape(new_forces, x_array, z_array, 2)
 
-    draw_figure_w_toolbar(window['-CANVAS2-'].TKCanvas, fig2, window['toolbar_canvas_2'].TKCanvas)
+    fig_agg2d2 = draw_figure_w_toolbar(window['-CANVAS2-'].TKCanvas, fig2, window['toolbar_canvas_2'].TKCanvas)
 
     window['fig1_save'].update(visible = True)
     window['fig2_save'].update(visible = True)
     
     window.refresh()
     window['tab3_column'].contents_changed()
-    return fig1, fig2
+    return fig1, fig2, fig_agg2d1, fig_agg2d2
     
 #####################################################################
 
 # code for event == "plot 3d graph"
 
 
-
+# embeds figure in canvas
 def draw_3d_figure(canvas, figure):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
     figure_canvas_agg.draw()
     figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
     return figure_canvas_agg
 
-def delete_3d_figure_agg(figure_agg):
-    figure_agg.get_tk_widget().forget()
-    plt.close('all')
 
 
+# calculates thetas and kappas for one force; calculates wrist coordinates; finds phis; creates 3d wrist plot. 
 def plot_3d(window, n, dict_of_parameters):
     window['-OUTPUT4-'].update(visible = False)
     window['-OUTPUT5-'].update("All values you entered are acceptable. Please wait a moment for the graph to load.", visible=True)
@@ -362,8 +392,10 @@ def plot_3d(window, n, dict_of_parameters):
                                                                                h_array, final_dict['mu'], final_dict['E_linear'], final_dict['E_super'], final_dict['epsilon_low'])
     force, x_array, z_array = ws.find_x_and_z_coordinates_for_one_force(final_dict['force_3d'], c_array, final_dict['n'], final_kappas, deflections)
 
+    phi_array = ts.find_phi(final_dict['n'], g_array, final_dict['r_outer'])
+
     r_mm = final_dict['r_outer']*1000.0
-    fig3d = td.plot_cylinders(r_mm, x_array, z_array, final_dict['n'], 3)
+    fig3d = td.plot_3d_wrist(r_mm, x_array, z_array, final_dict['n'], 3, final_kappas, deflections, phi_array)
     figure_agg_3d = draw_3d_figure(window['-CANVAS3-'].TKCanvas, fig3d)
                
     window.refresh()
@@ -375,6 +407,7 @@ def plot_3d(window, n, dict_of_parameters):
 #####################################################################
 #code for event == "Save Values"
 
+# takes the user inputs from the pysimplegui values dict and creates a list of strings. 
 def create_list_of_strings(dict1):
     value_list = []
     dict1 = dict1.copy()
@@ -404,6 +437,7 @@ def create_list_of_strings(dict1):
     return value_list 
 
 
+# writes list of strings to a file. 
 def export_values(dict1, file_path):
     value_list = create_list_of_strings(dict1)
     try:
@@ -419,14 +453,8 @@ def export_values(dict1, file_path):
 #####################################################################
 # code 1 for event == 'Load Values'
 
-def remove_figure_with_toolbar(canvas, canvas_toolbar):
-    if canvas.children:
-        for child in canvas.winfo_children():
-            child.destroy()
-    if canvas_toolbar.children:
-        for child in canvas_toolbar.winfo_children():
-            child.destroy()
 
+#clears user inputs before loading values from file
 def clear_values(dict1, n, window):
     keys = keys_to_check(n)
     window['n'].update(value=0)
@@ -434,6 +462,7 @@ def clear_values(dict1, n, window):
         window[key].update(value='')
         dict1[key] = ''
 
+# clears output texts and figures before loading values from file. 
 def update_window_before_loading_values(window, values, n, max_n, g_layout_list, h_layout_list, c_layout_list):
      
     remove_figure_with_toolbar(window['-CANVAS1-'].TKCanvas, window['toolbar_canvas_1'].TKCanvas)
@@ -443,18 +472,22 @@ def update_window_before_loading_values(window, values, n, max_n, g_layout_list,
     make_invisible(max_n, g_layout_list, h_layout_list, c_layout_list, values)
     window['n'].update(value='')
     values['n'] = ''
-    window['-OUTPUT3-'].update(visible=False)
+    window['-OUTPUT3-'].update(visible = False)
     window['fig1_save'].update(visible = False)
-    window['fig2_save'].update(visible = False)    
+    window['fig2_save'].update(visible = False)
+    window['-OUTPUT4-'].update(visible = False)
+    window['-OUTPUT5-'].update(visible = False)
     window.refresh()
     window['tab1_column'].contents_changed()
     window['tab3_column'].contents_changed()
+    window['tab4_column'].contents_changed()
+    
     
 #####################################################################
 
 #code 2 for event == 'Load Values'
 
-
+# maps the descriptive phrase in the file to the keys in the pysimplegui values dict. 
 def create_phrase_dict():
     phrase_dict = dict()
     phrases = ['Notches', 'Outer_Radius', 'Inner_Radius', 'Coefficient_Friction', "Linear_Young's_Modulus", 'Superelastic_Modulus', 'Strain_Lower']
@@ -463,15 +496,16 @@ def create_phrase_dict():
         phrase_dict[phrases[index].upper()] = keys[index]
     return phrase_dict  
 
+# creates list of pysimplegui keys for wrist dimensions and material properties. 
 def all_possible_keys(max_n):
-    list_of_keys = ['n', 'r_inner','r_outer', 'epsilon_low', 'E_super', 'E_linear', 'mu', 'max_force']
+    list_of_keys = ['n', 'r_inner','r_outer', 'epsilon_low', 'E_super', 'E_linear', 'mu']
     for num in range(0, max_n):
         list_of_keys.append('g{}'.format(num+1))
         list_of_keys.append('h{}'.format(num+1))
         list_of_keys.append('c{}'.format(num+1))
     return list_of_keys
 
-
+# parses file and loads values into a dict (imported_values). 
 def import_values(max_n, filename):
     phrase_dict = create_phrase_dict()
     
@@ -524,7 +558,7 @@ def import_values(max_n, filename):
         sg.popup("Problem reading file. Error is {}".format(error))
         return False, imported_values
 
-
+# takes values from imported_values dict and populating the GUI inputs. 
 def populate_inputs(imported_values, values, n, window):
     keys = keys_to_check(n)
     window['n'].update(value=imported_values['n'])
@@ -533,7 +567,7 @@ def populate_inputs(imported_values, values, n, window):
         window[key].update(value=imported_values[key])
         values[key] = imported_values[key]
     
-
+# asks user for a file and loads the values from the file. 
 def load_all_values(max_n, g_layout_list, h_layout_list, c_layout_list, window):
     filename = ''
     filename = sg.popup_get_file('Load values from a text file', save_as = False, no_window=True, file_types=(('TXT', '.txt'),))
@@ -585,7 +619,7 @@ for num in range(0, max_n):
 
 menu_def = [['File', ['Load Values', 'Save Values', 'Exit']]]
 
-# code for Wrist Dimenstions:
+# layout for Wrist Dimenstions tab:
 column1 = [[sg.Text("How many notches", background_color = background_clr)],
            [sg.Input(key='n', do_not_clear = True, enable_events=True)],
            [sg.Text(size=(100,1), background_color = background_clr, key='-OUTPUT1-', visible = False)],
@@ -602,7 +636,7 @@ column1 = [[sg.Text("How many notches", background_color = background_clr)],
 tab1 = [[sg.Column(column1, background_color=background_clr, vertical_scroll_only = True, scrollable = True, sbar_width = 35,
         sbar_background_color = "#FFFF8F", sbar_arrow_width = 35, sbar_arrow_color = "purple", size =(1500, 900), key='tab1_column')]]
 
-# code for material properties:
+# layout for material properties tab:
 tab2 = [
     [sg.Text('Coefficient of friction (mu):', background_color = background_clr), sg.Input(key = 'mu')],
     [sg.Text("Linear Young's Modulus (GPa):", background_color = background_clr), sg.Input(key = 'E_linear')],
@@ -611,7 +645,7 @@ tab2 = [
     ]
 
 
-# code for graphs:        
+# layout for graphs (2d) tab:        
 column2 = [
     [sg.Text('Maximum force (Newtons):', background_color = background_clr), sg.Input(key = 'max_force')],
     [sg.Button("Plot graphs")],
@@ -629,7 +663,7 @@ column2 = [
 tab3 = [[sg.Column(column2, background_color=background_clr, vertical_scroll_only = True, scrollable = True,
                    sbar_width = 35, sbar_background_color = "#FFFF8F", sbar_arrow_width = 35, sbar_arrow_color = "purple", size =(1500, 900), key='tab3_column')]]
 
-
+# layout for graph (3d) tab:
 column3 = [
     [sg.Text('Force (Newtons):', background_color = background_clr), sg.Input(key = 'force_3d')],
     [sg.Button("Plot 3d graph")],
@@ -644,7 +678,7 @@ tab4 = [[sg.Column(column3, background_color=background_clr, vertical_scroll_onl
                    sbar_width = 35, sbar_background_color = "#FFFF8F", sbar_arrow_width = 35, sbar_arrow_color = "purple", size =(1500, 900), key='tab4_column')]]
 
 
-#Layout with tabs:         
+#Layout with 4 tabs:         
 
 final_layout = [ [sg.Menu(menu_def, tearoff=True)],
     [sg.TabGroup([[sg.Tab('Wrist Dimensions', tab1, title_color='White',border_width =10, background_color = background_clr, element_justification= 'center'),
@@ -661,10 +695,11 @@ final_layout = [ [sg.Menu(menu_def, tearoff=True)],
 
 #code for event loop:
 
-window = sg.Window("Force Model", layout = final_layout, finalize = True)
+window = sg.Window("Notched Wrist Designer", layout = final_layout, finalize = True)
 
 n = 0
-
+fig_agg2d1 = None
+fig_agg2d2 = None
 figure_agg_3d = None
 
 while True:
@@ -675,7 +710,8 @@ while True:
         break
     if event == 'Exit':
         break
-    
+
+    # number of notches changes
     if values['n']:
         window['-OUTPUT1-'].update(visible = False)
         if not is_int(values['n']):
@@ -686,19 +722,23 @@ while True:
             window['tab1_column'].contents_changed()
         else:
             process_n(window, values, max_n, g_layout_list, h_layout_list, c_layout_list)
-        
 
-    if event == "-INg-":
-        populate_same_values('g', values, window)
-            
-    if event == "-INh-":
-        populate_same_values('h', values, window)
-            
-    if event == "-INc-":
-        populate_same_values('c', values, window)        
-        
-
+    # fill in all notches as notch 1 button is pressed:
+    if event in ("-INg-", "-INh-", "-INc-"):
+        if not is_int(values['n']) or not valid_n(values['n'], max_n):
+            window['-OUTPUT1-'].update("number of notches is not valid", visible=True)
+        else:
+            window['-OUTPUT1-'].update(visible=False)
+            window.refresh()
+            populate_same_values(event[3], values, window)  
+           
+    # plot graphs button is pressed in tab 3 (2d graphs)
     if event == "Plot graphs":
+        if fig_agg2d1:
+            delete_figure_agg(fig_agg2d1)
+        if fig_agg2d2:
+            delete_figure_agg(fig_agg2d2)
+            
         window['-OUTPUT2-'].update(visible = False)
         dict_of_parameters = values.copy()
         n = int(values['n'])
@@ -711,10 +751,10 @@ while True:
              window['-OUTPUT3-'].update("Please find and correct the values.", visible=True)
                   
         else:
-            fig1, fig2 = plot_graphs(window, n, dict_of_parameters)
+            fig1, fig2, fig_agg2d1, fig_agg2d2 = plot_graphs(window, n, dict_of_parameters)
             
            
-
+    # save force model graph button is pressed:
     if (event == 'fig1_path') and (values['fig1_path'] != ''):
         try:
             fig1.savefig(values['fig1_path'])
@@ -723,7 +763,7 @@ while True:
         else:
             sg.popup("force model saved as {}".format(values['fig1_path']))
 
-        
+    # save wrist shape graph button is pressed:    
     if (event == 'fig2_path') and (values['fig2_path'] != ''):
         try:
             fig2.savefig(values['fig2_path'])
@@ -732,28 +772,33 @@ while True:
         else:
             sg.popup("wrist shape saved as {}".format(values['fig2_path']))
 
+    # plot 3d graph button is pressed in tab 4:
     if event == 'Plot 3d graph':
         if figure_agg_3d:
-            delete_3d_figure_agg(figure_agg_3d)
+            delete_figure_agg(figure_agg_3d)
             
         window['-OUTPUT4-'].update(visible = False)
         window['-OUTPUT5-'].update(visible = False)
         
         dict_of_parameters = values.copy()
-        n = int(values['n'])
-        if not is_float(dict_of_parameters, window, n, '-OUTPUT4-'):
-            window['-OUTPUT5-'].update("Please find and correct the values that are not floats.", visible=True)
-        elif not check_parameters(dict_of_parameters, window, n, '-OUTPUT2-'):
-            window['-OUTPUT5-'].update("Please find and correct the values.", visible=True)
-        elif not valid_force(dict_of_parameters['force_3d']):
-             window['-OUTPUT4-'].update("force should be a float greater than 0.", visible=True)
-             window['-OUTPUT5-'].update("Please find and correct the values.", visible=True)
-             
+        if not is_int(values['n']) or not valid_n(values['n'], max_n):
+             window['-OUTPUT4-'].update("number of notches is not valid", visible=True)
         else:
-             fig3d, figure_agg_3d = plot_3d(window, n, dict_of_parameters)
+            window['-OUTPUT4-'].update(visible=False)
+            n = int(values['n'])
+            if not is_float(dict_of_parameters, window, n, '-OUTPUT4-'):
+                window['-OUTPUT5-'].update("Please find and correct the values that are not floats.", visible=True)
+            elif not check_parameters(dict_of_parameters, window, n, '-OUTPUT2-'):
+                window['-OUTPUT5-'].update("Please find and correct the values.", visible=True)
+            elif not valid_force(dict_of_parameters['force_3d']):
+                 window['-OUTPUT4-'].update("force should be a float greater than 0.", visible=True)
+                 window['-OUTPUT5-'].update("Please find and correct the values.", visible=True)
+             
+            else:
+                 fig3d, figure_agg_3d = plot_3d(window, n, dict_of_parameters)
          
             
-            
+    # menu save values option is chosen        
     if event == "Save Values":
         if values['n'] == '':
             sg.popup('Please fill in all the fields (except maximum force) before attempting to save.')
@@ -765,8 +810,11 @@ while True:
                     sg.popup("values were saved as {}".format(filename))
             
             
-
+    # menu load values option is chosen:
     if event == 'Load Values':
+        if figure_agg_3d:
+            delete_figure_agg(figure_agg_3d)
+                     
         update_window_before_loading_values(window, values, n, max_n, g_layout_list, h_layout_list, c_layout_list)
         load_all_values(max_n, g_layout_list, h_layout_list, c_layout_list, window)
 
@@ -790,4 +838,32 @@ Coefficient_Friction: 0.13
 Linear_Young's_Modulus: 10
 Superelastic_Modulus: 3
 Strain_Lower: 0.028
+"""
+
+
+"""
+Error/Exception that sometimes occurs after fiddling with the toolbars/changing the margins of the graphs and then trying to load new values (the Error does not stop the program):
+ 
+
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Python37\lib\tkinter\__init__.py", line 1705, in __call__
+    return self.func(*args)
+  File "C:\Python37\lib\site-packages\matplotlib\backends\_backend_tk.py", line 210, in filter_destroy
+    self.close_event()
+  File "C:\Python37\lib\site-packages\matplotlib\backend_bases.py", line 1797, in close_event
+    self.callbacks.process(s, event)
+  File "C:\Python37\lib\site-packages\matplotlib\cbook\__init__.py", line 292, in process
+    self.exception_handler(exc)
+  File "C:\Python37\lib\site-packages\matplotlib\cbook\__init__.py", line 96, in _exception_printer
+    raise exc
+  File "C:\Python37\lib\site-packages\matplotlib\cbook\__init__.py", line 287, in process
+    func(*args, **kwargs)
+  File "C:\Python37\lib\site-packages\matplotlib\backend_bases.py", line 3279, in <lambda>
+    "close_event", lambda e: manager.destroy())
+  File "C:\Python37\lib\site-packages\matplotlib\backends\_backend_tk.py", line 512, in destroy
+    self.window.update()
+  File "C:\Python37\lib\tkinter\__init__.py", line 1177, in update
+    self.tk.call('update')
+_tkinter.TclError: can't invoke "update" command: application has been destroyed
 """
