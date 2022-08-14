@@ -195,7 +195,7 @@ g_array = np.array([0.0014, 0.0014, 0.0014, 0.0014, 0.0014]) #table 2
 #final theta_array [0.34665659 0.31569582 0.2884928  0.26443844 0.24304743]
 
 
-
+# calls solve_for_thetas_and_kappas for multiple forces. 
 def find_forces_thetas_kappas(n, max_force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low):
     eta = 0.35
     
@@ -215,6 +215,7 @@ def find_forces_thetas_kappas(n, max_force, r_outer, r_inner, g_array, h_array, 
         
     return (forces, deflections, final_kappas)
 
+# calls solve_for_thetas_and_kappas for one force. 
 def find_thetas_kappas_for_one_force(n, force, r_outer, r_inner, g_array, h_array, mu, E_linear, E_super, epsilon_low):
     eta = 0.35
     y_bar_array = find_y_bars(n, r_outer, r_inner, g_array) 
@@ -231,7 +232,7 @@ def find_thetas_kappas_for_one_force(n, force, r_outer, r_inner, g_array, h_arra
 
     return force, deflections, final_kappas
 
-
+# returns matplotlib figure for forces and deflections. 
 def graph_force_model(forces, deflections, n, fignum):
     deflections2 = deflections.copy()
 
