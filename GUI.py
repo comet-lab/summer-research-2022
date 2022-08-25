@@ -1,3 +1,5 @@
+#Author Mollie Goldblatt mgoldbl1@umbc.edu 8/25/2022
+
 import PySimpleGUI as sg
 import theta_solver as ts
 import wrist_shape as ws
