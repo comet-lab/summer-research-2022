@@ -1,3 +1,5 @@
+#Author Mollie Goldblatt mgoldbl1@umbc.edu 8/25/2022
+
 import numpy as np
 import math
 import theta_solver as ts
